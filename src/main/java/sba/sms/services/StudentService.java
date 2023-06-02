@@ -8,8 +8,13 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.List;
 
+import org.hibernate.query.Query;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.Persistence;
 import jakarta.persistence.PersistenceContext;
 import sba.sms.dao.StudentI;
@@ -27,14 +32,18 @@ private Connection connection;
    private EntityManagerFactory emf;
    @PersistenceContext(unitName = "sbajpa")
    private EntityManager entityManager;
+   
+
 
    
    
-   public StudentService() {
+  public StudentService() {
        // Constructor for initializing the StudentService object
-       /*establishConnection();
-       emf = Persistence.createEntityManagerFactory("sbajpa"); */
+       /*establishConnection(); */
+       emf = Persistence.createEntityManagerFactory("sbajpa"); 
    } 
+
+
    
    public StudentService(Student student) {
        emf = Persistence.createEntityManagerFactory("sbajpa"); 
@@ -62,119 +71,7 @@ private Connection connection;
     
 
    
-  /* public  void createStudent(Student student) {
-	   establishConnection();
-       PreparedStatement statement = null;
 
-       try {
-           connection.setAutoCommit(false);
-
-           // Prepare the INSERT query
-           String query = "INSERT INTO sbajpa.student (name, email, password) VALUES (?, ?, ?)";
-           statement = connection.prepareStatement(query);
-
-           // Set the parameter values
-           statement.setString(0, student.getEmail());
-           statement.setString(1, student.getName());
-           statement.setString(2, student.getPassword());
-
-           // Execute the INSERT query
-           statement.executeUpdate();
-
-           // Commit the transaction
-           connection.commit();
-           
-
-           // Student added successfully
-
-       } catch (SQLException e) {
-           e.printStackTrace();
-           
-           // Rollback the transaction in case of exception
-           if (connection != null) {
-               try {
-                   connection.rollback();
-               } catch (SQLException ex) {
-                   ex.printStackTrace();
-               }
-           }
-       } finally {
-           // Close the statement and connection
-           if (statement != null) {
-               try {
-                   statement.close();
-               } catch (SQLException e) {
-                   e.printStackTrace();
-               }
-           }
-           if (connection != null) {
-               try {
-                   connection.close();
-               } catch (SQLException e) {
-                   e.printStackTrace();
-               }
-           }
-       }
-   }
-*/
-   
-   
-   
-   
-   @Override
-  /* public void createStudent(Student student) {
-       Connection connection = null;
-       Savepoint savepoint = null;
-       
-       try {
-           // Establish the database connection
-           connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sbajpa", "root", "Jessicadaniel1.");
-           
-           // Disable auto-commit to handle transactions manually
-           connection.setAutoCommit(false);
-           
-           // Create a savepoint before making any changes
-           savepoint = connection.setSavepoint();
-           
-           // Code to persist the student to the database
-           // Execute the necessary SQL statements or use prepared statements
-           // Example:
-           String insertQuery = "INSERT INTO sbajpa.student (name,email,password) VALUES (?, ?,?)";
-           PreparedStatement statement = connection.prepareStatement(insertQuery);
-           statement.setString(1, student.getName());
-           statement.setString(2, student.getEmail());
-           statement.setString(2, student.getPassword());
-           statement.executeUpdate();
-           
-           // Commit the transaction
-           connection.commit();
-           
-       } catch (SQLException e) {
-           // Handle exceptions
-           
-           // Roll back to the savepoint if an exception occurs
-           if (connection != null) {
-               try {
-                   connection.rollback(savepoint);
-               } catch (SQLException rollbackException) {
-                   // Handle rollback exception
-               }
-           }
-           
-           // Log or re-throw the exception as needed
-       } 
-           // Close the connection and release resources
-           if (connection != null) {
-               try {
-                   connection.close();
-               } catch (SQLException closeException) {
-                   // Handle closing exception
-               }
-           }
-       }
-   
-   */
-   
    
    
    public void createStudent(Student student) {
@@ -394,47 +291,47 @@ private Connection connection;
     
     
     
-    @Override
+
+    
     
     public void registerStudentToCourse(String email, int courseId) {
-        PreparedStatement statement = null;
-        ResultSet resultSet = null;
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction transaction = null;
 
         try {
-            // Check if the student is already registered for the course
-        	connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sbajpa", "root", "Jessicadaniel1.");
-            boolean isRegistered = isStudentRegisteredForCourse(email, courseId);
-            if (isRegistered) {
-                System.out.println("Student is already registered for the course.");
-                return;
+            transaction = em.getTransaction();
+            transaction.begin();
+
+            // Get the student and course entities
+            Student student = em.find(Student.class, email);
+            Course course = em.find(Course.class, courseId);
+
+            if (student != null && course != null) {
+                // Create the SQL insert statement
+                String sql = "INSERT INTO student_courses (course_id, student_email) VALUES (?, ?)";
+                
+                // Execute the SQL statement
+                jakarta.persistence.Query query = em.createNativeQuery(sql);
+                query.setParameter(1, course.getId());
+                query.setParameter(2, student.getEmail());
+                query.executeUpdate();
             }
 
-            connection.commit();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle the exception and perform rollback
-            try {
-                connection.rollback();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null && transaction.isActive()) {
+                transaction.rollback();
             }
+            e.printStackTrace();
         } finally {
-            // Close the result set, statement, and connection
-            try {
-                if (resultSet != null) {
-                    resultSet.close();
-                }
-                if (statement != null) {
-                    statement.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
+            if (em != null) {
+                em.close();
             }
         }
     }
+    
+    
+    
 
     private boolean isStudentRegisteredForCourse(String email, int courseId) throws SQLException {
         PreparedStatement statement = null;

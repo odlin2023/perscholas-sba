@@ -31,8 +31,8 @@ public class Student  {
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "student_courses",
-            joinColumns = @JoinColumn(name = "student_email"),
-            inverseJoinColumns = @JoinColumn(name = "courses_id"))
+            joinColumns = @JoinColumn(name = "course_id"),
+            inverseJoinColumns = @JoinColumn(name = "student_email"))
     private List<Course> courses;
 
     public Student() {
