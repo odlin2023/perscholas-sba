@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd"
+             version="2.2">
+
+    <persistence-unit name="sbajpa"  transaction-type="RESOURCE_LOCAL">
+        <!-- Configure the database connection details -->
+                <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+        <class>com.sba.sms.model.Student</class>
+    <class>com.sba.sms.services.Course</class>
+        <properties>
+
+            <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/sbajpa"/>
+            <property name="javax.persistence.jdbc.user" value="root"/>
+            <property name="javax.persistence.jdbc.password" value="Jessicadaniel1."/>
+            <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
+            <property name="javax.persistence.schema-generation.database.action" value="create"/>
+            
+            <!-- Delete and create tables on each run -->
+            <property name="javax.persistence.schema-generation.database.action" value="drop-and-create"/>
+            <!-- Specify the appropriate database dialect for your database -->
+            <property name="org.hibernate.dialect.MySQLDialect" value="org.hibernate.dialect.YourDatabaseDialect"/>
+
+        </properties>
+    </persistence-unit>
+</persistence>
